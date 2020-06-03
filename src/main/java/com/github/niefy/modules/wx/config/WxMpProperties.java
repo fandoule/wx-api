@@ -13,6 +13,13 @@ public class WxMpProperties {
 
     @Data
     public static class MpConfig {
+        //多app
+        /**
+         * 设置微信公众号的名称
+         */
+        private String appName;
+
+
         /**
          * 设置微信公众号的appid
          */

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.tag.WxUserTag;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,27 +25,33 @@ public class WxUserTagsServiceImpl implements WxUserTagsService {
     private WxUserService wxUserService;
     public static final String CACHE_KEY="'WX_USER_TAGS'";
 
+
+    //多app
+    public static String getLocal(){
+        return WxMpConfigStorageHolder.get();
+    }
+
     @Override
-    @Cacheable(key = CACHE_KEY)
+    @Cacheable(key = "#root.target.getLocal() + #root.target.CACHE_KEY")
     public List<WxUserTag> getWxTags() throws WxErrorException {
         log.info("拉取公众号用户标签");
         return wxService.getUserTagService().tagGet();
     }
 
     @Override
-    @CacheEvict(key = CACHE_KEY)
+    @Cacheable(key = "#root.target.getLocal() + #root.target.CACHE_KEY")
     public void creatTag(String name) throws WxErrorException {
         wxService.getUserTagService().tagCreate(name);
     }
 
     @Override
-    @CacheEvict(key = CACHE_KEY)
+    @Cacheable(key = "#root.target.getLocal() + #root.target.CACHE_KEY")
     public void updateTag(Long tagid, String name) throws WxErrorException {
         wxService.getUserTagService().tagUpdate(tagid,name);
     }
 
     @Override
-    @CacheEvict(key = CACHE_KEY)
+    @Cacheable(key = "#root.target.getLocal() + #root.target.CACHE_KEY")
     public void deleteTag(Long tagid) throws WxErrorException {
         wxService.getUserTagService().tagDelete(tagid);
     }

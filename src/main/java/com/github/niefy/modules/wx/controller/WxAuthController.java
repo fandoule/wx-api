@@ -8,6 +8,7 @@ import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.result.WxMpOAuth2AccessToken;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,9 @@ public class WxAuthController {
     @Autowired
     SysLogService sysLogService;
     private final WxMpService wxService;
-    @Value("${wx.mp.configs[0].appid}")
-    private String appId;
+    //多app
+/*    @Value("${wx.mp.configs[0].appid}")
+    private String appId;*/
     @Value("${server.baseAddress}")
     private String appBaseAddress;
 
@@ -121,7 +123,9 @@ public class WxAuthController {
         // signature
         String wxSignature = SHA1Util.sha1(wxSignString);
         Map<String, String> resMap = new TreeMap<>();
-        resMap.put("appId", appId);
+//        resMap.put("appId", appId);
+        //多app
+        resMap.put("appId", WxMpConfigStorageHolder.get());
         resMap.put("wxTimestamp", wxTimestamp);
         resMap.put("wxNoncestr", wxNoncestr);
         resMap.put("wxSignature", wxSignature);

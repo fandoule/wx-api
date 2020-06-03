@@ -1,6 +1,6 @@
 package com.github.niefy.modules.wx.service.impl;
 
-import com.github.niefy.modules.wx.entity.TemplateMsgLog;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -31,9 +31,14 @@ public class WxMsgServiceImpl extends ServiceImpl<WxMsgMapper, WxMsg> implements
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
+
         String msgTypes = (String)params.get("msgTypes");
         String startTime = (String)params.get("startTime");
         String openid = (String)params.get("openid");
+        //多app
+        String appId = WxMpConfigStorageHolder.get();
+
+
         IPage<WxMsg> page = this.page(
                 new Query<WxMsg>().getPage(params),
                 new QueryWrapper<WxMsg>()

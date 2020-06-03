@@ -6,6 +6,7 @@
 package com.github.niefy.config;
 
 import com.github.niefy.common.xss.XssFilter;
+import com.github.niefy.modules.wx.config.WxAppFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,5 +43,16 @@ public class FilterConfig {
         registration.setName("xssFilter");
         registration.setOrder(Integer.MAX_VALUE);
         return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean wxAppFilter(){
+        FilterRegistrationBean registration = new FilterRegistrationBean(new WxAppFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("wxAppFilter");
+        registration.setOrder(10);
+        registration.setEnabled(true);
+        return registration;
+
     }
 }

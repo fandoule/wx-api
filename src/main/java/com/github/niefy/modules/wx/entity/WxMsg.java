@@ -26,6 +26,14 @@ public class WxMsg implements Serializable {
 	 */
 	@TableId
 	private Long id;
+
+	//多app
+	/**
+	 * 微信号
+	 */
+	private String toUser;
+
+
 	/**
 	 * 微信用户ID
 	 */
@@ -55,6 +63,7 @@ public class WxMsg implements Serializable {
 	public WxMsg() {
 	}
 	public WxMsg(WxMpXmlMessage wxMessage) {
+		this.toUser = wxMessage.getToUser();
 		this.openid=wxMessage.getFromUser();
 		this.inOut = WxMsgInOut.IN;
 		this.msgType = wxMessage.getMsgType();
