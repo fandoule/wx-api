@@ -7,6 +7,7 @@ import com.github.niefy.modules.wx.service.WxUserService;
 import com.github.niefy.modules.wx.service.WxUserTagsService;
 import me.chanjar.weixin.common.error.WxError;
 import me.chanjar.weixin.common.error.WxErrorException;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class WxUserTagsController {
         }
         WxUser wxUser = wxUserService.getById(openid);
         if(wxUser==null){
+            //多app
             wxUser=wxUserService.refreshUserInfo(openid);
             if(wxUser==null)
                 return R.error("not_subscribed");

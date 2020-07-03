@@ -3,6 +3,7 @@ package com.github.niefy.modules.wx.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.niefy.config.TaskExcutor;
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
 import com.github.niefy.modules.wx.entity.MsgReplyRule;
 import com.github.niefy.modules.wx.entity.WxMsg;
 import com.github.niefy.modules.wx.service.MsgReplyRuleService;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +35,9 @@ import java.util.concurrent.TimeUnit;
 public class MsgReplyServiceImpl implements MsgReplyService {
     @Autowired
     MsgReplyRuleService msgReplyRuleService;
-    @Autowired
-    WxMpService wxService;
+    //多app
+    @Resource
+    WxMpStorageServiceImpl wxMpService;
     @Value("${wx.mp.autoReplyInterval:1000}")
     Long autoReplyInterval;
     @Autowired
@@ -53,31 +56,40 @@ public class MsgReplyServiceImpl implements MsgReplyService {
         try {
             List<MsgReplyRule> rules = msgReplyRuleService.getMatchedRules(exactMatch, keywords);
             if (rules.isEmpty()) return false;
-            long delay = 0;
+            for(MsgReplyRule rule: rules){
+                this.reply(toUser,rule.getReplyType(),rule.getReplyContent());
+            }
+            return true;
+            // 多app
+            // 无法获取当前线程appId
+            /*long delay = 0;
             for (MsgReplyRule rule : rules) {
                 TaskExcutor.schedule(() -> {
                     this.reply(toUser,rule.getReplyType(),rule.getReplyContent());
                 }, delay, TimeUnit.MILLISECONDS);
                 delay += autoReplyInterval;
             }
-            return true;
+            return true;*/
         } catch (Exception e) {
             log.error("自动回复出错：", e);
         }
         return false;
     }
 
+    /**
+     * {@link me.chanjar.weixin.mp.api.WxMpMessageRouter#route}
+     */
     @Override
     public void replyText(String toUser, String content) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.TEXT().toUser(toUser).content(content).build());
-
+        log.info("{}", wxMpService.getWxMpConfigStorage());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.TEXT().toUser(toUser).content(content).build());
         JSONObject json = new JSONObject().fluentPut("content",content);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.TEXT,toUser,json));
     }
 
     @Override
     public void replyImage(String toUser, String mediaId) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.IMAGE().toUser(toUser).mediaId(mediaId).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.IMAGE().toUser(toUser).mediaId(mediaId).build());
 
         JSONObject json = new JSONObject().fluentPut("mediaId",mediaId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.IMAGE,toUser,json));
@@ -85,7 +97,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
 
     @Override
     public void replyVoice(String toUser, String mediaId) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.VOICE().toUser(toUser).mediaId(mediaId).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.VOICE().toUser(toUser).mediaId(mediaId).build());
 
         JSONObject json = new JSONObject().fluentPut("mediaId",mediaId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.VOICE,toUser,json));
@@ -93,7 +105,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
 
     @Override
     public void replyVideo(String toUser, String mediaId) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.VIDEO().toUser(toUser).mediaId(mediaId).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.VIDEO().toUser(toUser).mediaId(mediaId).build());
 
         JSONObject json = new JSONObject().fluentPut("mediaId",mediaId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.VIDEO,toUser,json));
@@ -102,7 +114,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     @Override
     public void replyMusic(String toUser, String musicInfoJson) throws WxErrorException {
         JSONObject json = JSON.parseObject(musicInfoJson);
-        wxService.getKefuService().sendKefuMessage(
+        wxMpService.getKefuService().sendKefuMessage(
             WxMpKefuMessage.MUSIC().toUser(toUser)
                 .musicUrl(json.getString("musicurl"))
                 .hqMusicUrl(json.getString("hqmusicurl"))
@@ -117,14 +129,14 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     /**
      * 发送图文消息（点击跳转到外链） 图文消息条数限制在1条以内
      * @param toUser
-     * @param articleIdStr
+     * @param newsInfoJson
      * @throws WxErrorException
      */
     @Override
     public void replyNews(String toUser, String newsInfoJson) throws WxErrorException {
         WxMpKefuMessage.WxArticle wxArticle = JSON.parseObject(newsInfoJson, WxMpKefuMessage.WxArticle.class);
         List<WxMpKefuMessage.WxArticle> newsList = new ArrayList<WxMpKefuMessage.WxArticle>(){{add(wxArticle);}};
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.NEWS().toUser(toUser).articles(newsList).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.NEWS().toUser(toUser).articles(newsList).build());
 
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.NEWS,toUser,JSON.parseObject(newsInfoJson)));
     }
@@ -137,7 +149,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
      */
     @Override
     public void replyMpNews(String toUser, String mediaId) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.MPNEWS().toUser(toUser).mediaId(mediaId).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.MPNEWS().toUser(toUser).mediaId(mediaId).build());
 
         JSONObject json = new JSONObject().fluentPut("mediaId",mediaId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.MPNEWS,toUser,json));
@@ -145,7 +157,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
 
     @Override
     public void replyWxCard(String toUser, String cardId) throws WxErrorException {
-        wxService.getKefuService().sendKefuMessage(WxMpKefuMessage.WXCARD().toUser(toUser).cardId(cardId).build());
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.WXCARD().toUser(toUser).cardId(cardId).build());
 
         JSONObject json = new JSONObject().fluentPut("cardId",cardId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.WXCARD,toUser,json));
@@ -154,7 +166,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     @Override
     public void replyMiniProgram(String toUser, String miniProgramInfoJson) throws WxErrorException {
         JSONObject json = JSON.parseObject(miniProgramInfoJson);
-        wxService.getKefuService().sendKefuMessage(
+        wxMpService.getKefuService().sendKefuMessage(
             WxMpKefuMessage.MINIPROGRAMPAGE()
                 .toUser(toUser)
                 .title(json.getString("title"))
@@ -170,7 +182,7 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     public void replyMsgMenu(String toUser, String msgMenusJson) throws WxErrorException {
         JSONObject json = JSON.parseObject(msgMenusJson);
         List<WxMpKefuMessage.MsgMenu> msgMenus = json.getJSONArray("list").toJavaList(WxMpKefuMessage.MsgMenu.class);
-        wxService.getKefuService().sendKefuMessage(
+        wxMpService.getKefuService().sendKefuMessage(
             WxMpKefuMessage.MSGMENU()
                 .toUser(toUser)
                 .headContent(json.getString("head_content"))

@@ -19,7 +19,6 @@ public interface WxUserService extends IService<WxUser> {
 
     /**
      * 根据openid更新用户信息
-     *
      * @param openid
      * @return
      */
@@ -27,9 +26,10 @@ public interface WxUserService extends IService<WxUser> {
 
     /**
      * 异步批量更新用户信息
+     * @param appId
      * @param openidList
      */
-    void refreshUserInfoAsync(String[] openidList);
+    void refreshUserInfoAsync(String appId, String[] openidList);
 
     /**
      * 数据存在时更新，否则新增
@@ -46,13 +46,15 @@ public interface WxUserService extends IService<WxUser> {
     void unsubscribe(String openid);
     /**
      * 同步用户列表
+     * @param appId //多app
      */
-    void syncWxUsers();
+    void syncWxUsers(final String appId);
     
     /**
      * 通过传入的openid列表，同步用户列表
+     * @param appId //多app
      * @param openids
      */
-    void syncWxUsers(List<String> openids) throws WxErrorException;
+    void syncWxUsers(final String appId, List<String> openids) throws WxErrorException;
 
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -31,7 +32,11 @@ public class WxMsg implements Serializable {
 	/**
 	 * 微信号
 	 */
-	private String toUser;
+	private String appUsername;
+	/**
+	 * 微信id
+	 */
+	private String appId;
 
 
 	/**
@@ -63,7 +68,6 @@ public class WxMsg implements Serializable {
 	public WxMsg() {
 	}
 	public WxMsg(WxMpXmlMessage wxMessage) {
-		this.toUser = wxMessage.getToUser();
 		this.openid=wxMessage.getFromUser();
 		this.inOut = WxMsgInOut.IN;
 		this.msgType = wxMessage.getMsgType();
@@ -96,8 +100,12 @@ public class WxMsg implements Serializable {
 			this.detail.put("eventKey",wxMessage.getEventKey());
 		}
 	}
+
+
 	public static WxMsg buildOutMsg(String msgType,String openid,JSONObject detail){
+		//多app
 		WxMsg wxMsg = new WxMsg();
+		wxMsg.appId = WxMpConfigStorageHolder.get();
 		wxMsg.msgType = msgType;
 		wxMsg.openid = openid;
 		wxMsg.detail = detail;

@@ -26,6 +26,11 @@ public class WxQrCode implements Serializable {
      */
     @TableId
     private Long id;
+
+    //多app
+    private String appId;
+
+
     /**
      * 二维码类型
      */

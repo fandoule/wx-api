@@ -8,6 +8,7 @@ import com.github.niefy.common.utils.PageUtils;
 import com.github.niefy.common.utils.Query;
 import com.github.niefy.modules.wx.entity.MsgReplyRule;
 import com.github.niefy.modules.wx.dao.MsgReplyRuleMapper;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -26,10 +27,12 @@ public class MsgReplyRuleServiceImpl extends ServiceImpl<MsgReplyRuleMapper, Msg
     public PageUtils queryPage(Map<String, Object> params) {
         String matchValue = (String) params.get("matchValue");
         IPage<MsgReplyRule> page = this.page(
-            new Query<MsgReplyRule>().getPage(params),
-            new QueryWrapper<MsgReplyRule>()
-                    .like(!StringUtils.isEmpty(matchValue), "match_value", matchValue)
-                    .orderByDesc("update_time")
+                new Query<MsgReplyRule>().getPage(params),
+                new QueryWrapper<MsgReplyRule>()
+                        .like(!StringUtils.isEmpty(matchValue), "match_value", matchValue)
+                        //多app
+                        .eq("app_id", WxMpConfigStorageHolder.get())
+                        .orderByDesc("update_time")
         );
 
         return new PageUtils(page);
@@ -43,6 +46,7 @@ public class MsgReplyRuleServiceImpl extends ServiceImpl<MsgReplyRuleMapper, Msg
 
     @Override
     public boolean save(MsgReplyRule msgReplyRule) {
+        msgReplyRule.setAppId(WxMpConfigStorageHolder.get());
         if (msgReplyRule.getRuleId() > 0) {
             msgReplyRuleMapper.updateById(msgReplyRule);
         } else {
@@ -58,7 +62,10 @@ public class MsgReplyRuleServiceImpl extends ServiceImpl<MsgReplyRuleMapper, Msg
      */
     @Override
     public List<MsgReplyRule> getRules() {
-        return msgReplyRuleMapper.selectList(new QueryWrapper<MsgReplyRule>().orderByDesc("rule_id"));
+        return msgReplyRuleMapper.selectList(new QueryWrapper<MsgReplyRule>()
+                //多app
+                .eq("app_id", WxMpConfigStorageHolder.get())
+                .orderByDesc("rule_id"));
     }
 
     /**
@@ -69,11 +76,13 @@ public class MsgReplyRuleServiceImpl extends ServiceImpl<MsgReplyRuleMapper, Msg
     @Override
     public List<MsgReplyRule> getValidRules() {
         return msgReplyRuleMapper.selectList(
-            new QueryWrapper<MsgReplyRule>()
-                .eq("status", 1)
-                .isNotNull("match_value")
-                .ne("match_value", "")
-                .orderByDesc("priority"));
+                new QueryWrapper<MsgReplyRule>()
+                        //多app
+                        .eq("app_id", WxMpConfigStorageHolder.get())
+                        .eq("status", 1)
+                        .isNotNull("match_value")
+                        .ne("match_value", "")
+                        .orderByDesc("priority"));
     }
 
     /**
@@ -87,9 +96,9 @@ public class MsgReplyRuleServiceImpl extends ServiceImpl<MsgReplyRuleMapper, Msg
     public List<MsgReplyRule> getMatchedRules(boolean exactMatch, String keywords) {
         LocalTime now = LocalTime.now();
         return this.getValidRules().stream()
-                .filter(rule->null == rule.getEffectTimeStart() || rule.getEffectTimeStart().isBefore(now))// 检测是否在有效时段，effectTimeStart为null则一直有效
-                .filter(rule->null == rule.getEffectTimeEnd() || rule.getEffectTimeEnd().isAfter(now)) // 检测是否在有效时段，effectTimeEnd为null则一直有效
-                .filter(rule->isMatch(exactMatch || rule.isExactMatch(),rule.getMatchValue().split(","),keywords)) //检测是否符合匹配规则
+                .filter(rule -> null == rule.getEffectTimeStart() || rule.getEffectTimeStart().isBefore(now))// 检测是否在有效时段，effectTimeStart为null则一直有效
+                .filter(rule -> null == rule.getEffectTimeEnd() || rule.getEffectTimeEnd().isAfter(now)) // 检测是否在有效时段，effectTimeEnd为null则一直有效
+                .filter(rule -> isMatch(exactMatch || rule.isExactMatch(), rule.getMatchValue().split(","), keywords)) //检测是否符合匹配规则
                 .collect(Collectors.toList());
     }
 

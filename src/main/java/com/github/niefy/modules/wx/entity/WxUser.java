@@ -9,7 +9,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.github.niefy.common.utils.Json;
 import lombok.Data;
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -23,8 +24,14 @@ import java.util.Date;
 public class WxUser implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    @TableId(type = IdType.INPUT)
+//    @TableId(type = IdType.INPUT)
+//    private String openid;
+    //多app
+    @TableId
+    private Long id;
     private String openid;
+    private String appId;
+
     private String phone;
     private String nickname;
     private int sex;
@@ -36,7 +43,7 @@ public class WxUser implements Serializable {
     private boolean subscribe;
     private String unionid;
     private String remark;
-    private JSONArray tagidList;
+    private String tagidList;
     private String subscribeScene;
     private String qrSceneStr;
 
@@ -59,10 +66,14 @@ public class WxUser implements Serializable {
 			this.subscribeTime = new Date(wxMpUser.getSubscribeTime()*1000);
 			this.unionid=wxMpUser.getUnionId();
 			this.remark=wxMpUser.getRemark();
-			this.tagidList=JSONArray.parseArray(JSONObject.toJSONString(wxMpUser.getTagIds()));
+            Long[] tagIds = wxMpUser.getTagIds();
+            if(ArrayUtils.isNotEmpty(tagIds)){
+                this.tagidList = StringUtils.join(tagIds, ",");
+            }
+//			this.tagidList=JSONArray.parseArray(JSONObject.toJSONString(wxMpUser.getTagIds()));
 			this.subscribeScene=wxMpUser.getSubscribeScene();
 			String qrScene =  wxMpUser.getQrScene();
-			this.qrSceneStr= StringUtils.isEmpty(qrScene) ? wxMpUser.getQrSceneStr() : qrScene;
+			this.qrSceneStr= StringUtils.isNotBlank(qrScene) ? qrScene: wxMpUser.getQrSceneStr() ;
 		}
     }
 

@@ -1,5 +1,6 @@
 package com.github.niefy.modules.wx.service.impl;
 
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
 import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,9 +22,20 @@ import com.github.niefy.modules.wx.dao.WxMsgMapper;
 import com.github.niefy.modules.wx.entity.WxMsg;
 import com.github.niefy.modules.wx.service.WxMsgService;
 
+import javax.annotation.Resource;
+
 
 @Service("wxMsgService")
 public class WxMsgServiceImpl extends ServiceImpl<WxMsgMapper, WxMsg> implements WxMsgService {
+    //多app appId -> appUsername
+    @Resource
+    private WxMpStorageServiceImpl wxMpService;
+
+    public String getAppId(String appUsername){
+        return wxMpService.getAppId(appUsername);
+    }
+
+
     /**
      * 未保存的队列
      */
@@ -35,14 +47,16 @@ public class WxMsgServiceImpl extends ServiceImpl<WxMsgMapper, WxMsg> implements
         String msgTypes = (String)params.get("msgTypes");
         String startTime = (String)params.get("startTime");
         String openid = (String)params.get("openid");
-        //多app
+        //多app 取原始ID参数
         String appId = WxMpConfigStorageHolder.get();
-
+        String appUsername = wxMpService.getAppUsername(appId);
 
         IPage<WxMsg> page = this.page(
                 new Query<WxMsg>().getPage(params),
                 new QueryWrapper<WxMsg>()
                         .in(StringUtils.isNotEmpty(msgTypes),"msg_type", Arrays.asList(msgTypes.split(",")))
+                        .and(i-> i.eq("app_username", appUsername).or(e-> e.eq("app_id", appId)))
+                        .eq(StringUtils.isNotEmpty(appUsername), "app_username", appUsername)
                         .eq(StringUtils.isNotEmpty(openid),"openid",openid)
                         .ge(StringUtils.isNotEmpty(startTime),"create_time",startTime)
         );

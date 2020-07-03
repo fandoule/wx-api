@@ -8,6 +8,8 @@ import com.github.niefy.modules.wx.entity.TemplateMsgLog;
 import com.github.niefy.modules.wx.service.TemplateMsgLogService;
 import com.github.niefy.common.utils.PageUtils;
 import com.github.niefy.common.utils.Query;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +23,12 @@ public class TemplateMsgLogServiceImpl extends ServiceImpl<TemplateMsgLogMapper,
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
+        String openid = (String) params.get("openid");
         IPage<TemplateMsgLog> page = this.page(
-            new Query<TemplateMsgLog>().getPage(params),
-            new QueryWrapper<TemplateMsgLog>()
+                new Query<TemplateMsgLog>().getPage(params),
+                new QueryWrapper<TemplateMsgLog>()
+                        .eq("app_id", WxMpConfigStorageHolder.get())
+                        .like(StringUtils.isNotBlank(openid), "openid", openid)
         );
 
         return new PageUtils(page);

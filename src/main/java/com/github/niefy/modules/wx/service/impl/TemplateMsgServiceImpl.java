@@ -1,5 +1,6 @@
 package com.github.niefy.modules.wx.service.impl;
 
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
 import com.github.niefy.modules.wx.entity.MsgTemplate;
 import com.github.niefy.modules.wx.form.TemplateMsgBatchForm;
 import com.github.niefy.modules.wx.form.TemplateMsgForm;
@@ -19,12 +20,14 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateMessage;
 
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -43,7 +46,11 @@ public class TemplateMsgServiceImpl implements TemplateMsgService {
     Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private TemplateMsgLogService templateMsgLogService;
-    private final WxMpService wxService;
+
+    //多app appId -> appUsername
+    @Resource
+    private WxMpStorageServiceImpl wxMpService;
+//    private final WxMpService wxService;
     @Autowired
     MsgTemplateService msgTemplateService;
     @Autowired
@@ -55,23 +62,31 @@ public class TemplateMsgServiceImpl implements TemplateMsgService {
     @Override
     @Async
     public void sendTemplateMsg(WxMpTemplateMessage msg) {
+        final String appId = WxMpConfigStorageHolder.get();
         TaskExcutor.submit(() -> {
-            String result;
+            String state, result;
             try {
-                result = wxService.getTemplateMsgService().sendTemplateMsg(msg);
+                //多app
+                WxMpConfigStorageHolder.set(appId);
+                state = "0";
+                result = wxMpService.getTemplateMsgService().sendTemplateMsg(msg);
+                WxMpConfigStorageHolder.remove();
             } catch (WxErrorException e) {
+                state = "1";
                 result = e.getMessage();
             }
 
             //保存发送日志
-            TemplateMsgLog log = new TemplateMsgLog(msg, result);
+            TemplateMsgLog log = new TemplateMsgLog(msg, state, result);
+            log.setAppId(appId);
             templateMsgLogService.addLog(log);
         });
     }
 
     @Override
 	@Async
-    public void sendMsgBatch(TemplateMsgBatchForm form) {
+    public void sendMsgBatch(final String appId, TemplateMsgBatchForm form) {
+        WxMpConfigStorageHolder.set(appId);
 		logger.info("批量发送模板消息任务开始,参数：{}",form.toString());
 		WxMpTemplateMessage.WxMpTemplateMessageBuilder builder = WxMpTemplateMessage.builder()
 				.templateId(form.getTemplateId())
@@ -93,7 +108,8 @@ public class TemplateMsgServiceImpl implements TemplateMsgService {
 			currentPage=wxUserIPage.getCurrent()+1L;
 			totalPages=wxUserIPage.getPages();
 		}
-		logger.info("批量发送模板消息任务结束");
+        WxMpConfigStorageHolder.remove();
+        logger.info("批量发送模板消息任务结束");
     }
 
 }

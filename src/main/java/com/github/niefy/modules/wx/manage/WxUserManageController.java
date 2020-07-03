@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -66,8 +67,9 @@ public class WxUserManageController {
     @PostMapping("/syncWxUsers")
     @RequiresPermissions("wx:wxuser:save")
     public R syncWxUsers() {
-        userService.syncWxUsers();
-
+        //多app
+        final String appId = WxMpConfigStorageHolder.get();
+        userService.syncWxUsers(appId);
         return R.ok("任务已建立");
     }
 

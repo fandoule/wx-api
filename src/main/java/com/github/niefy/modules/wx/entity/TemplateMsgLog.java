@@ -24,6 +24,11 @@ public class TemplateMsgLog implements Serializable {
     private static final long serialVersionUID = 1L;
     @TableId(type = IdType.AUTO)
     private int logId;
+    //多app
+    private String appId;
+    //成功0失败1
+    private String state;
+
     private String touser;
     private String templateId;
     private JSONArray data;
@@ -35,13 +40,14 @@ public class TemplateMsgLog implements Serializable {
     public TemplateMsgLog() {
     }
 
-    public TemplateMsgLog(WxMpTemplateMessage msg, String sendResult) {
+    public TemplateMsgLog(WxMpTemplateMessage msg, String state, String sendResult) {
         this.touser = msg.getToUser();
         this.templateId = msg.getTemplateId();
         this.url = msg.getUrl();
         this.miniprogram = JSONObject.parseObject(JSON.toJSONString(msg.getMiniProgram()));
         this.data = JSONArray.parseArray(JSON.toJSONString(msg.getData()));
         this.sendTime = new Date();
+        this.state = state;
         this.sendResult = sendResult;
     }
 

@@ -15,5 +15,5 @@ public interface TemplateMsgService {
      * 批量消息发送
      * @param form
      */
-    void sendMsgBatch(TemplateMsgBatchForm form);
+    void sendMsgBatch(String appId, TemplateMsgBatchForm form);
 }

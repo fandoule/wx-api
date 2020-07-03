@@ -3,6 +3,7 @@ package com.github.niefy.modules.wx.manage;
 import java.util.Arrays;
 import java.util.Map;
 
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +31,9 @@ public class TemplateMsgLogManageController {
      * 列表
      */
     @GetMapping("/list")
-    @RequiresPermissions("wx:templatemsglog:list")
+//    @RequiresPermissions("wx:templatemsglog:list")
     public R list(@RequestParam Map<String, Object> params) {
+
         PageUtils page = templateMsgLogService.queryPage(params);
 
         return R.ok().put("page", page);

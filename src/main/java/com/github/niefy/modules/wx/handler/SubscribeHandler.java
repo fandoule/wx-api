@@ -2,6 +2,8 @@ package com.github.niefy.modules.wx.handler;
 
 import java.util.Map;
 
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,11 +27,15 @@ public class SubscribeHandler extends AbstractHandler {
     WxUserService userService;
 
     @Override
-    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService wxMpService,
+    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService wxService,
                                     WxSessionManager sessionManager) throws WxErrorException {
 
         this.logger.info("新关注用户 OPENID: " + wxMessage.getFromUser() + "，事件：" + wxMessage.getEventKey());
-
+        //多app
+        WxMpStorageServiceImpl wxMpService = (WxMpStorageServiceImpl)wxService;
+        String appUsername = wxMessage.getToUser();
+        final String appId = wxMpService.getAppId(appUsername);
+        WxMpConfigStorageHolder.set(appId);
         userService.refreshUserInfo(wxMessage.getFromUser());
 
         msgReplyService.tryAutoReply(true, wxMessage.getFromUser(), wxMessage.getEvent());

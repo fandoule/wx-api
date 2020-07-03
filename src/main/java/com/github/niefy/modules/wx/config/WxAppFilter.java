@@ -27,9 +27,11 @@ public class WxAppFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest)request;
         String wechatAppId = httpRequest.getHeader("appId");
         log.info("::::::::::::::::appid -> {}", wechatAppId);
-        log.info("::::::::::::::::params -> {}", JSON.toJSONString(httpRequest.getParameterMap()));
+        log.info("::::::::::::::::uri -> {}, params -> {}",httpRequest.getRequestURI(), JSON.toJSONString(httpRequest.getParameterMap()));
         if(StringUtils.isNotBlank(wechatAppId)){
             WxMpConfigStorageHolder.set(wechatAppId);
+        }else{
+            WxMpConfigStorageHolder.remove();
         }
         chain.doFilter(request, response);
     }

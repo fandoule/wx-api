@@ -15,9 +15,13 @@ public class WxMpProperties {
     public static class MpConfig {
         //多app
         /**
-         * 设置微信公众号的名称
+         * 公众号名称(供前台下拉选)
          */
         private String appName;
+        /**
+         * 公众号原始id (区分接收消息)
+         */
+        private String appUsername;
 
 
         /**

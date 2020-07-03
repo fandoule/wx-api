@@ -17,6 +17,10 @@ public class Article implements Serializable {
     private static final long serialVersionUID = 1L;
     @TableId(type = IdType.AUTO)
     private int id;
+    //多app
+    private String appId;
+
+
     private int type;
     @TableField(insertStrategy = FieldStrategy.IGNORED)//title重复则不插入
     @NotEmpty(message = "标题不得为空")

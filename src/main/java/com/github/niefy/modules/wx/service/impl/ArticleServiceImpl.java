@@ -12,6 +12,7 @@ import com.github.niefy.common.exception.RRException;
 import com.github.niefy.common.utils.PageUtils;
 import com.github.niefy.common.utils.Query;
 import com.github.niefy.modules.wx.dao.ArticleMapper;
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -40,14 +41,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         String type = (String) params.get("type");
         String category = (String) params.get("category");
         String subCategory = (String) params.get("subCategory");
+        String appId = WxMpConfigStorageHolder.get();
         IPage<Article> page = this.page(
-            new Query<Article>().getPage(params),
-            new QueryWrapper<Article>()
-                .select(LIST_FILEDS)
-                .eq(!StringUtils.isEmpty(type), "type", type)
-                .like(!StringUtils.isEmpty(category), "category", category)
-                .like(!StringUtils.isEmpty(subCategory), "sub_category", subCategory)
-                .like(!StringUtils.isEmpty(title), "title", title)
+                new Query<Article>().getPage(params),
+                new QueryWrapper<Article>()
+                        .select(LIST_FILEDS)
+                        .eq("app_id", appId)
+                        .eq(!StringUtils.isEmpty(type), "type", type)
+                        .like(!StringUtils.isEmpty(category), "category", category)
+                        .like(!StringUtils.isEmpty(subCategory), "sub_category", subCategory)
+                        .like(!StringUtils.isEmpty(title), "title", title)
         );
 
         return new PageUtils(page);
@@ -86,9 +89,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         } else {
             String title = article.getTitle();
             int count = articleMapper.selectCount(
-                new QueryWrapper<Article>().eq("title", title)
-                    .eq("category", article.getCategory())
-                    .eq("sub_category", article.getSubCategory())
+                    new QueryWrapper<Article>().eq("title", title)
+                            .eq("category", article.getCategory())
+                            .eq("sub_category", article.getSubCategory())
             );
             if (count > 0) throw new RRException("同目录下文章[" + title + "]已存在，不可重复添加");
             article.setCreateTime(new Date());
@@ -111,10 +114,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     public IPage<Article> getArticles(String title, int page) {
-        return this.page(new Page<Article>(page, PageSizeConstant.PAGE_SIZE_SMALL),
-            new QueryWrapper<Article>().like(!StringUtils.isEmpty("title"), "title", title)
-                .select(LIST_FILEDS)
-                .orderBy(true, false, "update_time"));
+        return this.page(new Page<>(page, PageSizeConstant.PAGE_SIZE_SMALL),
+                new QueryWrapper<Article>().like(!StringUtils.isEmpty("title"), "title", title)
+                        .select(LIST_FILEDS)
+                        .orderBy(true, false, "update_time"));
     }
 
     /**
@@ -127,9 +130,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public List<Article> selectCategory(ArticleTypeEnum articleType, String category) {
         return this.list(new QueryWrapper<Article>()
-            .select(LIST_FILEDS)
-            .eq("type", articleType.getValue())
-            .eq("category", category));
+                .select(LIST_FILEDS)
+                .eq("type", articleType.getValue())
+                .eq("category", category));
     }
 
     /**
@@ -143,9 +146,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public List<Article> search(ArticleTypeEnum articleType, String category, String keywords) {
         return this.list(new QueryWrapper<Article>()
-            .select(LIST_FILEDS)
-            .eq("type", articleType.getValue())
-            .eq(!StringUtils.isEmpty(category), "category", category)
-            .and(i -> i.like("summary", keywords).or().like("title", keywords)));
+                .select(LIST_FILEDS)
+                .eq("type", articleType.getValue())
+                .eq(!StringUtils.isEmpty(category), "category", category)
+                .and(i -> i.like("summary", keywords).or().like("title", keywords)));
     }
 }

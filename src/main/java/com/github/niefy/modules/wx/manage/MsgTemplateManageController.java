@@ -6,6 +6,7 @@ import java.util.Map;
 import com.github.niefy.modules.wx.entity.MsgTemplate;
 import com.github.niefy.modules.wx.form.TemplateMsgBatchForm;
 
+import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -116,7 +117,7 @@ public class MsgTemplateManageController {
     @PostMapping("/sendMsgBatch")
     @RequiresPermissions("wx:msgtemplate:save")
     public R sendMsgBatch(@RequestBody TemplateMsgBatchForm form) throws WxErrorException {
-        templateMsgService.sendMsgBatch(form);
+        templateMsgService.sendMsgBatch(WxMpConfigStorageHolder.get(), form);
         return R.ok();
     }
 

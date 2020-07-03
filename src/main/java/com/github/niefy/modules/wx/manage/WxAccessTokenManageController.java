@@ -1,6 +1,7 @@
 package com.github.niefy.modules.wx.manage;
 
 import com.github.niefy.common.utils.R;
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -9,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 微信公众号菜单管理
@@ -20,14 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class WxAccessTokenManageController {
     Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final WxMpService wxService;
+
+    //多app
+    @Resource
+    private WxMpStorageServiceImpl wxMpService;
+//
+//    private final WxMpService wxService;
 
     /**
      * 获取公众号菜单
      */
     @GetMapping("/getAccessToken")
     public R getAccessToken() throws WxErrorException {
-        String accessToken = wxService.getAccessToken();
+        String accessToken = wxMpService.getAccessToken();
         return R.ok().put(accessToken);
     }
 }

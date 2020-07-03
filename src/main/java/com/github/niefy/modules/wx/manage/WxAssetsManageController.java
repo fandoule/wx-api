@@ -1,8 +1,12 @@
 package com.github.niefy.modules.wx.manage;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.github.niefy.common.utils.R;
+import com.github.niefy.modules.wx.config.multiApp.WxMpStorageServiceImpl;
 import com.github.niefy.modules.wx.form.MaterialFileDeleteForm;
 import com.github.niefy.modules.wx.service.WxAssetsService;
+import com.google.common.collect.ImmutableMap;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.bean.material.*;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -12,8 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
+
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.MassMessage.MESSAGE_MASS_SENDALL_URL;
 
 /**
  * 微信公众号素材管理
@@ -26,6 +33,43 @@ public class WxAssetsManageController {
     Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     WxAssetsService wxAssetsService;
+    @Resource
+    private WxMpStorageServiceImpl wxMpService;
+
+
+    /**
+     * {
+     *    "filter":{
+     *       "is_to_all":false,
+     *       "tag_id":2
+     *    },
+     *    "mpnews":{
+     *       "media_id":"123dsdajkasd231jhksad"
+     *    },
+     *     "msgtype":"mpnews",
+     *     "send_ignore_reprint":0  //图文消息被判定为转载时，是否继续群发。 1为继续群发（转载），0为停止群发。 该参数默认为0
+     * }
+     *
+     * 发表图文 （群发)
+     * @param mediaId
+     * @return
+     */
+    @PostMapping("/publish")
+    public R publish(@RequestBody String mediaId) throws WxErrorException {
+        ImmutableMap<String, Object> build = ImmutableMap.<String, Object>builder()
+                .put("filter", ImmutableMap.of("is_to_all", true))
+                .put("mpnews", ImmutableMap.of("media_id", mediaId))
+                .put("msgtype", "mpnews")
+                .put("send_ignore_reprint", 0)
+                .build();
+        String res = wxMpService.post(MESSAGE_MASS_SENDALL_URL, JSON.toJSONString(build));
+        return R.ok().put(res);
+    }
+
+
+
+
+
 
     /**
      * 获取素材总数
